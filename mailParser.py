@@ -19,7 +19,7 @@ dutyTimestamps = []
 timestamps = []
 
 ###Config###
-interval = "Month" ###Day or Month
+interval = "Month" ###Day, Week or Month
 startDate = datetime(2021,1,1) #Y/M/D
 endDate = datetime(2025,9,1) #Y/M/D
 
@@ -241,4 +241,5 @@ for dataSet in range(5):
         ax2 = ax.twinx()
         ax2.plot([x[0] for x in cumulative],[x[1] for x in cumulative],color='red')
     plt.title(plotTitle)
+
 plt.show()
