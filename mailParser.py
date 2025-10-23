@@ -4,22 +4,23 @@ import shutil
 
 from datetime import datetime, timedelta
 
-###Edit this with your own mailsave directory
-mailDir1 = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mail_Artaros Blackthorne"
-mailDir2 = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mail_Aile'atha Brightsun"
+###Character List: Add your character names to this list if you want their saved mail included
+charList = ["Artaros Blackthorne","Aile'atha Brightsun","Xanthira Silverwind"]
 
-mailFiles1 = os.listdir(mailDir1)
-mailFiles2 = os.listdir(mailDir2)
+###Edit this with your own SWG path and account name
+mailDirMain = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega"
 
-mailDir = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mailcombined"
+mailDir = mailDirMain + "\\mailcombined"
 
-for file in mailFiles1:
-    if not os.path.exists(mailDir + '\\' + file):
-        shutil.copy(mailDir1 + '\\' + file, mailDir + '\\' + file)
+if not os.path.exists(mailDir):
+    os.makedirs(mailDir)
 
-for file in mailFiles2:
-    if not os.path.exists(mailDir + '\\' + file):
-        shutil.copy(mailDir2 + '\\' + file, mailDir + '\\' + file)
+for char in charList:
+    thisDir = mailDirMain + "\\mail_" + char
+    dirFiles = os.listdir(thisDir)
+    for file in dirFiles:
+        if not os.path.exists(mailDir + '\\' + file):
+            shutil.copy(thisDir + '\\' + file, mailDir + '\\' + file)
 
 mailFiles = os.listdir(mailDir)
 
