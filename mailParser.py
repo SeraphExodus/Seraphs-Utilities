@@ -1,10 +1,25 @@
 import matplotlib.pyplot as plt
 import os
+import shutil
 
 from datetime import datetime, timedelta
 
 ###Edit this with your own mailsave directory
-mailDir = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mail_Artaros Blackthorne"
+mailDir1 = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mail_Artaros Blackthorne"
+mailDir2 = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mail_Aile'atha Brightsun"
+
+mailFiles1 = os.listdir(mailDir1)
+mailFiles2 = os.listdir(mailDir2)
+
+mailDir = "E:\\Program Files (x86)\\StarWarsGalaxies\\profiles\\seraphexodus\\Omega\\mailcombined"
+
+for file in mailFiles1:
+    if not os.path.exists(mailDir + '\\' + file):
+        shutil.copy(mailDir1 + '\\' + file, mailDir + '\\' + file)
+
+for file in mailFiles2:
+    if not os.path.exists(mailDir + '\\' + file):
+        shutil.copy(mailDir2 + '\\' + file, mailDir + '\\' + file)
 
 mailFiles = os.listdir(mailDir)
 
@@ -19,9 +34,9 @@ dutyTimestamps = []
 timestamps = []
 
 ###Config###
-interval = "Month" ###Day, Week or Month
-startDate = datetime(2021,1,1) #Y/M/D
-endDate = datetime(2025,9,1) #Y/M/D
+interval = "Day" ###Day or Month
+startDate = datetime(2025,6,1) #Y/M/D
+endDate = datetime(2025,12,31) #Y/M/D
 
 fig, ax = plt.subplots(5,1,figsize=(10,12),tight_layout=True)
 
@@ -51,6 +66,8 @@ for file in mailFiles:
             try:
                 tokens = int(tokens)
                 cpu = creds/tokens
+                if cpu < 1000:
+                    cpu = 1000
             except:
                 tokens = int(creds/1000)
                 cpu = 1000
@@ -61,6 +78,8 @@ for file in mailFiles:
                 try:
                     tokens = int(tokens)
                     cpu = creds/tokens
+                    if cpu < 1000:
+                        cpu = 1000
                 except:
                     tokens = int(creds/1000)
                     cpu = 1000
@@ -83,6 +102,8 @@ for file in mailFiles:
             except:
                 creds = 0
         purchaseCredits.append(creds)
+
+allTimestamps = saleTimestamps + dutyTimestamps + purchaseTimestamps
 
 for dataSet in range(5):
     if dataSet == 0:
@@ -107,18 +128,18 @@ for dataSet in range(5):
         plotTitle = "Duty Token price per " + interval + " (cpu)"
 
 
-    startYear = min([x.year for x in timestamps])
-    startMonth = min([x.month for x in timestamps if x.year == startYear])
-    startDay = min([x.day for x in timestamps if x.year == startYear and x.month == startMonth])
+    startYear = min([x.year for x in allTimestamps])
+    startMonth = min([x.month for x in allTimestamps if x.year == startYear])
+    startDay = min([x.day for x in allTimestamps if x.year == startYear and x.month == startMonth])
 
     if datetime(startYear,startMonth,startDay) < startDate:
         startYear = startDate.year
         startMonth = startDate.month
         startDay = startDate.day
 
-    endYear = max([x.year for x in timestamps])
-    endMonth = max([x.month for x in timestamps if x.year == endYear])
-    endDay = max([x.day for x in timestamps if x.year == endYear and x.month == endMonth])
+    endYear = max([x.year for x in allTimestamps])
+    endMonth = max([x.month for x in allTimestamps if x.year == endYear])
+    endDay = max([x.day for x in allTimestamps if x.year == endYear and x.month == endMonth])
 
     if datetime(endYear,endMonth,endDay) > endDate:
         endYear = endDate.year
@@ -236,10 +257,12 @@ for dataSet in range(5):
         cumulative.append([data[0],cumTotal])
 
     ax = plt.subplot(5,1,dataSet+1)
-    ax.plot([x[0] for x in chartData],[x[1] for x in chartData],color='blue')
+    
     if dataSet != 4:
+        ax.plot([x[0] for x in chartData],[x[1] for x in chartData],color='blue')
         ax2 = ax.twinx()
         ax2.plot([x[0] for x in cumulative],[x[1] for x in cumulative],color='red')
+    else:
+        ax.plot([x[0] for x in chartData if x[1] != 0],[x[1] for x in chartData if x[1] != 0],color='blue')
     plt.title(plotTitle)
-
 plt.show()
