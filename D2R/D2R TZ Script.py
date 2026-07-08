@@ -10,11 +10,8 @@ import win32api
 from win32gui import GetWindowText, GetForegroundWindow
 
 headerFont = ("Calibri", 12, 'bold')
-summaryFont = ("Calibri", 11, 'bold')
-summaryFontStats = ("Calibri", 11)
-baseFont = ("Calibri", 10, 'bold')
-baseFontStats = ("Calibri", 10, 'bold')
-buttonFont = ("Calibri", 13, 'bold')
+baseFont = ("Calibri", 11, 'bold')
+buttonFont = ("Calibri", 14, 'bold')
 fontPadding = 0
 elementPadding = 4
 bgColor = '#202225'
@@ -150,6 +147,10 @@ utcOffset = utcOffsetRaw.days * 60 * 60 * 24 + utcOffsetRaw.seconds
 
 tzList = sorted(set(zone))
 
+truncatedNames = [', '.join(x[0:43].split(', ')[0:-1]) + '...' if len(x) >= 43 else x for x in tzList]
+print(tzList)
+print(truncatedNames)
+
 def main():
 
     resetTime()
@@ -161,7 +162,7 @@ def main():
 
     rCol = [
         [sg.Text('',key='currTZ',font=baseFont,p=1),sg.Push()],
-        [sg.Combo(tzList,default_value='Cathedral, Catacombs, Inner Cloister',key='tarTZ',s=50,font=baseFont,p=1,readonly=True),sg.Push()],
+        [sg.Combo(truncatedNames,default_value='Cathedral, Catacombs, Inner Cloister',key='tarTZ',s=45,font=baseFont,p=1,readonly=True),sg.Push()],
     ]
 
     Layout = [
@@ -170,7 +171,7 @@ def main():
         [sg.Push(),sg.Button('Set Terror Zone',font=buttonFont),sg.Button('Reset Time',font=buttonFont),sg.Button('Reset Time and Close',font=buttonFont),sg.Push()]
     ]
 
-    window = sg.Window('Terror Zone Manager',Layout,size=(565,125),finalize=True)
+    window = sg.Window('Terror Zone Manager',Layout,size=(545,125),finalize=True)
 
     lastTime = datetime.now()
     setTZ = False
@@ -222,7 +223,7 @@ def main():
         if setTZ:
             if lastTime.minute != currentTime.minute or initialize:
                 initialize = False
-                targetTZ = values['tarTZ']
+                targetTZ = tzList[truncatedNames.index(values['tarTZ'])]
                 if utcTime.minute in [29, 59] or currentTZ != targetTZ:
                     zoneTimes = []
                     zoneDeltas = []
