@@ -4,6 +4,8 @@ Contact me: seraphexodus on Discord
 
 Caveat: I wrote this for personal use and I can't guarantee that everything will work as intended on your machine. It very likely won't work at all on any non-Windows OS. That being said, if you're really hitting a wall and desperate to get it working, contact me on Discord and I can try to help.
 
+Quick Start: Simply download and run the .exe, or download the .py files and run from your favorite python IDE.
+
 Overview: 
 
 This mini-application allows you to choose, set, and maintain a terror zone in Diablo II Resurrected for an indefinite amount of time. Additionally, it has support for mouse inputs to quickly change the /players setting.
