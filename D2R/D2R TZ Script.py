@@ -93,14 +93,14 @@ def formatTime(inputTime):
     return datetime(inputTime.year,inputTime.month,inputTime.day,inputTime.hour,inputTime.minute)
 
 def resetTime():
-    utcTime = formatTime(datetime.now().astimezone(timezone.utc))
+    currentTime = datetime.now()
     #Reset system time to NTP time
     try:
         client = ntplib.NTPClient()
         response = client.request('pool.ntp.org')
         realTime = datetime.fromtimestamp(response.tx_time) + timedelta(seconds=utcOffset)
         win32api.SetSystemTime(realTime.year,realTime.month,0,realTime.day,realTime.hour,realTime.minute,realTime.second,int(realTime.microsecond/1000))
-        print('Time changed from',utcTime,'to',datetime.now())
+        print('Time changed from',currentTime,'to',datetime.now())
     except OSError:
         print('Internet date and time could not be reported by server.')
 
@@ -234,7 +234,7 @@ def main():
                             zoneDeltas.append(delta)
                     targetTime = zoneTimes[zoneDeltas.index(min(zoneDeltas))]
                     win32api.SetSystemTime(targetTime.year,targetTime.month,0,targetTime.day,targetTime.hour,targetTime.minute,targetTime.second,0)
-                    print('Time changed from',utcTime,'to',datetime.now())
+                    print('Time changed from',currentTime,'to',datetime.now())
 
         lastTime = currentTime
 
