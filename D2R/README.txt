@@ -1,6 +1,8 @@
 D2R Offline Play Tools v1.0 by SeraphExodus
 
-Contact me: seraphexodus on Discord or trf84 on Reddit
+Contact me: seraphexodus on Discord
+
+Caveat: I wrote this for personal use and I can't guarantee that everything will work as intended on your machine. It very likely won't work at all on any non-Windows OS. That being said, if you're really hitting a wall and desperate to get it working, contact me on Discord and I can try to help.
 
 Overview: 
 
