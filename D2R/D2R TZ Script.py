@@ -9,12 +9,12 @@ import sys
 import win32api
 from win32gui import GetWindowText, GetForegroundWindow
 
-headerFont = ("Roboto", 12, 'bold')
-summaryFont = ("Roboto", 11, 'bold')
-summaryFontStats = ("Roboto", 11)
-baseFont = ("Roboto", 10, 'bold')
-baseFontStats = ("Roboto", 10, 'bold')
-buttonFont = ("Roboto", 13, 'bold')
+headerFont = ("Calibri", 12, 'bold')
+summaryFont = ("Calibri", 11, 'bold')
+summaryFontStats = ("Calibri", 11)
+baseFont = ("Calibri", 10, 'bold')
+baseFontStats = ("Calibri", 10, 'bold')
+buttonFont = ("Calibri", 13, 'bold')
 fontPadding = 0
 elementPadding = 4
 bgColor = '#202225'
