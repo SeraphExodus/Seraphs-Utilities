@@ -148,8 +148,6 @@ utcOffset = utcOffsetRaw.days * 60 * 60 * 24 + utcOffsetRaw.seconds
 tzList = sorted(set(zone))
 
 truncatedNames = [', '.join(x[0:43].split(', ')[0:-1]) + '...' if len(x) >= 43 else x for x in tzList]
-print(tzList)
-print(truncatedNames)
 
 def main():
 
