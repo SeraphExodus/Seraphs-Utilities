@@ -196,7 +196,10 @@ def main():
             delta = utcTime.minute
         tzTime = utcTime - timedelta(minutes = delta)
         tzIndex = time.index(tzTime)
-        currentTZ = zone[tzIndex]
+        if len(zone[tzIndex]) >= 43:
+            currentTZ = ', '.join(zone[tzIndex][0:43].split(', ')[0:-1]) + '...'
+        else:
+            currentTZ = zone[tzIndex]
         window['currTZ'].update(currentTZ)
 
         if event == 'Set Terror Zone':
@@ -233,7 +236,9 @@ def main():
                             zoneDeltas.append(delta)
                     targetTime = zoneTimes[zoneDeltas.index(min(zoneDeltas))]
                     win32api.SetSystemTime(targetTime.year,targetTime.month,0,targetTime.day,targetTime.hour,targetTime.minute,targetTime.second,0)
+                    print('------------')
                     print('Time changed from',currentTime,'to',datetime.now())
+                    print('Active Terror Zone set to',targetTZ)
 
         lastTime = currentTime
 
