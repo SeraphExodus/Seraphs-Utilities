@@ -41,6 +41,7 @@ mode = True
 def on_click(x, y, button, pressed):
     global pCount
     global mode
+    # global startTime
     activeWindow = GetWindowText(GetForegroundWindow())
     if pressed and button == Button.middle:
         if activeWindow == 'Diablo II: Resurrected':
@@ -81,6 +82,10 @@ def on_click(x, y, button, pressed):
                 pCount -= 1
                 print('pCount set to ' + str(pCount))
                 sendInput('/players ' + str(pCount))
+    # if pressed and button == Button.right:
+    #     startTime = datetime.now()
+    # if not pressed and button == Button.right:
+    #     print(datetime.now()-startTime)
                 
 dataSourceURL = 'https://d2emu.com/data/tz-2023-localized.json'
 
