@@ -257,8 +257,9 @@ def buildoutParser():
         [sg.Checkbox('Show asteroids',default=True,font=baseFont,p=0,enable_events=True,key='asteroids')],
         [sg.Checkbox('Show static objects',default=True,font=baseFont,p=0,enable_events=True,key='statics')],
         [sg.Text('',font=baseFont,p=0)],
-        [sg.Radio('Copy all waypoints',default=True,font=baseFont,p=0,enable_events=True,key='wp1',group_id='radio')],
+        [sg.Radio('Copy all spawn waypoints',default=True,font=baseFont,p=0,enable_events=True,key='wp1',group_id='radio')],
         [sg.Radio('Copy shortest path between static waypoints',default=False,font=baseFont,p=0,enable_events=True,key='wp2',group_id='radio')],
+        [sg.Radio("Copy selected patrol's waypoints",default=False,font=baseFont,p=0,enable_events=True,key='wp3',group_id='radio')],
     ]
 
     Layout = [
@@ -470,6 +471,14 @@ def buildoutParser():
                         for i in range(0,len(bestPath)):
                             bestPathString += '/way ' + zone + ' ' + str(bestPath[i][0]) + ' ' + str(bestPath[i][1]) + ' ' + str(bestPath[i][2]) + ' Point ' + str(i) + ' (' + str(spheres[i]) + 'm) green;'
                         toClipboard(bestPathString)
+
+                if values['wp3']:
+                    patrolCoords = [[xcoords[i],ycoords[i],zcoords[i]] for i in range(len(xcoords))]
+                    pathString = ''
+                    colors = [' green;'] + [' white;'] * (len(patrolCoords) - 2) + [' red;']
+                    for i in range(len(patrolCoords)):
+                        pathString += '/way ' + zone + ' ' + str(patrolCoords[i][0]) + ' ' + str(patrolCoords[i][1]) + ' '+ str(patrolCoords[i][2]) + ' Point ' + str(i) + colors[i]
+                    toClipboard(pathString)
 
                 if len(rows) == 1:
                     for i in range(1,3):
