@@ -14,6 +14,8 @@ np.seterr(invalid='raise')
 
 fontList = sg.Text.fonts_installed_list()
 
+uiEnable = False ###Toggle to show or hide the sg and matplotlib guis
+
 if "Roboto" not in fontList:
     try:
         pyglet.options['win32_gdi_font'] = True
@@ -224,7 +226,7 @@ def transformRoll(matrix,degrees):
 
     return matrix
 
-def renderPoints(position,trans,ax):
+def renderPoints(position,trans):
 
     #So to rework this:
     #Create rotation matrix for Facing onto Z, then apply to the point grid
@@ -308,115 +310,149 @@ def renderPoints(position,trans,ax):
 
     return points, dists
 
+#okay so I want to render random obstacles in the shape of cubes (for now)
+#Key constraints: Cubes built from 8 mutually adjacent points
+
+def renderCube(surface,points):
+    cubeColor = pygame.Color(255,180,30,255)
+    pygame.draw.polygon(surface, cubeColor, points, width=0)
+
 def main():
 
-    fig = plt.figure(figsize=(24,12))
-    ax = fig.add_subplot(projection='3d')
-    mgr = plt.get_current_fig_manager()
-    mgr.window.setGeometry(2230,336,1024,768)
-    plt.ion()
-    plt.show()
+    if uiEnable:
 
-    if os.path.exists('Data/tables.db') and os.path.exists('Data/savedata.db'):
+        fig = plt.figure(figsize=(24,12))
+        ax = fig.add_subplot(projection='3d')
+        mgr = plt.get_current_fig_manager()
+        try:
+            mgr.window.setGeometry(2230,336,1024,768)
+        except:
+            mgr.window.wm_geometry('1024x768+2230+336')
+        plt.ion()
+        plt.show()
 
-        data = sqlite3.connect("file:Data/tables.db?mode=rw", uri=True)
-        cur = data.cursor()
+        if os.path.exists('Data/tables.db') and os.path.exists('Data/savedata.db'):
 
-        data2 = sqlite3.connect("file:Data/savedata.db?mode=rw", uri=True)
-        cur2 = data2.cursor()
+            data = sqlite3.connect("file:Data/tables.db?mode=rw", uri=True)
+            cur = data.cursor()
 
-        chassisData = cur.execute("SELECT name, accel, decel, pitchaccel, yawaccel, rollaccel, speedmod, speedfoils, minthrottle, optthrottle, maxthrottle, slide FROM chassis").fetchall()
-        chassisNames = [chassis[0] for chassis in chassisData]
+            data2 = sqlite3.connect("file:Data/savedata.db?mode=rw", uri=True)
+            cur2 = data2.cursor()
 
-        engineData = cur2.execute("SELECT * FROM engine").fetchall()
-        engineNames = [engine[0] for engine in engineData]
+            chassisData = cur.execute("SELECT name, accel, decel, pitchaccel, yawaccel, rollaccel, speedmod, speedfoils, minthrottle, optthrottle, maxthrottle, slide FROM chassis").fetchall()
+            chassisNames = [chassis[0] for chassis in chassisData]
 
-        boosterData = cur2.execute("SELECT * FROM booster").fetchall()
-        boosterNames = [booster[0] for booster in boosterData]
+            engineData = cur2.execute("SELECT * FROM engine").fetchall()
+            engineNames = [engine[0] for engine in engineData]
 
-        selectionLeftCol = [
-            [sg.Push(),sg.Text('Select Chassis:',font=baseFont)],
-            [sg.Push(),sg.Text('Select Engine:',font=baseFont)],
-            [sg.Push(),sg.Text('Select Booster:',font=baseFont)],
-        ]
+            boosterData = cur2.execute("SELECT * FROM booster").fetchall()
+            boosterNames = [booster[0] for booster in boosterData]
 
-        selectionRightCol = [
-            [sg.Combo(chassisNames,'Havoc Starfighter',s=(25,20),font=baseFont,key='chassis'),sg.Push()],
-            [sg.Combo(engineNames,'[BHI] RE10 Engine // Icarus',s=(25,10),font=baseFont,key='engine'),sg.Push()],
-            [sg.Combo(boosterNames,'[BHI] BR-5x // Overdriven 3',s=(25,10),font=baseFont,key='booster'),sg.Push()]
-        ]
+            selectionLeftCol = [
+                [sg.Push(),sg.Text('Select Chassis:',font=baseFont)],
+                [sg.Push(),sg.Text('Select Engine:',font=baseFont)],
+                [sg.Push(),sg.Text('Select Booster:',font=baseFont)],
+            ]
 
-        selectionLayout = [
-            [sg.Frame('',selectionLeftCol,border_width=0,p=0),sg.Frame('',selectionRightCol,border_width=0,p=0)],
-            [sg.VPush()],
-            [sg.Push(),sg.Button('Continue',font=('Roboto',14,'bold')),sg.Push()]
-        ]
+            selectionRightCol = [
+                [sg.Combo(chassisNames,'Havoc Starfighter',s=(25,20),font=baseFont,key='chassis'),sg.Push()],
+                [sg.Combo(engineNames,'[BHI] RE10 Engine // Icarus',s=(25,10),font=baseFont,key='engine'),sg.Push()],
+                [sg.Combo(boosterNames,'[BHI] BR-5x // Overdriven 3',s=(25,10),font=baseFont,key='booster'),sg.Push()]
+            ]
 
-        window = sg.Window('Select Chassis, Engine, and Booster',selectionLayout,finalize=True,size=(400,150))
+            selectionLayout = [
+                [sg.Frame('',selectionLeftCol,border_width=0,p=0),sg.Frame('',selectionRightCol,border_width=0,p=0)],
+                [sg.VPush()],
+                [sg.Push(),sg.Button('Continue',font=('Roboto',14,'bold')),sg.Push()]
+            ]
 
-        while True:
-            event, values = window.read()
+            window = sg.Window('Select Chassis, Engine, and Booster',selectionLayout,finalize=True,size=(400,150))
 
-            if event == 'Continue':
-                chassis = values['chassis']
-                engine = values['engine']
-                booster = values['booster']
-                
-                if chassis != '' and engine != '' and booster != '':
-                    chassisStats = list([data for data in chassisData if data[0] == chassis][0])
-                    engineStats = list([data for data in engineData if data[0] == engine][0])
-                    boosterStats = list([data for data in boosterData if data[0] == booster][0])
-                    overloadMod = 1.4
-                    accel = tryFloat(chassisStats[1]) * overloadMod
-                    decel = tryFloat(chassisStats[2]) * overloadMod
-                    pAccel = tryFloat(chassisStats[3]) * overloadMod
-                    yAccel = tryFloat(chassisStats[4]) * overloadMod
-                    rAccel = tryFloat(chassisStats[5]) * overloadMod
-                    if chassisStats[7] != 'N/A':
-                        speedMod = tryFloat(chassisStats[7])
-                    else:
-                        speedMod = tryFloat(chassisStats[6])
-                    chassisMinThrottleMod = tryFloat(chassisStats[8])
-                    chassisOptThrottleMod = tryFloat(chassisStats[9])
-                    chassisMaxThrottleMod = tryFloat(chassisStats[10])
-                    slideMod = tryFloat(chassisStats[11])
-                    maxPitch = engineStats[3] * overloadMod
-                    maxYaw = engineStats[4] * overloadMod
-                    maxRoll = engineStats[5] * overloadMod
-                    topSpeed = engineStats[6] * overloadMod * speedMod
-                    boosterEnergy = boosterStats[3]
-                    boosterRR = boosterStats[4]
-                    boosterCons = boosterStats[5]
-                    boosterAccel = boosterStats[6]
-                    boosterTS = boosterStats[7] * speedMod
+            while True:
+                event, values = window.read()
+
+                if event == 'Continue':
+                    chassis = values['chassis']
+                    engine = values['engine']
+                    booster = values['booster']
+                    
+                    if chassis != '' and engine != '' and booster != '':
+                        chassisStats = list([data for data in chassisData if data[0] == chassis][0])
+                        engineStats = list([data for data in engineData if data[0] == engine][0])
+                        boosterStats = list([data for data in boosterData if data[0] == booster][0])
+                        overloadMod = 1.4
+                        accel = tryFloat(chassisStats[1]) * overloadMod
+                        decel = tryFloat(chassisStats[2]) * overloadMod
+                        pAccel = tryFloat(chassisStats[3]) * overloadMod
+                        yAccel = tryFloat(chassisStats[4]) * overloadMod
+                        rAccel = tryFloat(chassisStats[5]) * overloadMod
+                        if chassisStats[7] != 'N/A':
+                            speedMod = tryFloat(chassisStats[7])
+                        else:
+                            speedMod = tryFloat(chassisStats[6])
+                        chassisMinThrottleMod = tryFloat(chassisStats[8])
+                        chassisOptThrottleMod = tryFloat(chassisStats[9])
+                        chassisMaxThrottleMod = tryFloat(chassisStats[10])
+                        slideMod = tryFloat(chassisStats[11])
+                        maxPitch = engineStats[3] * overloadMod
+                        maxYaw = engineStats[4] * overloadMod
+                        maxRoll = engineStats[5] * overloadMod
+                        topSpeed = engineStats[6] * overloadMod * speedMod
+                        boosterEnergy = boosterStats[3]
+                        boosterRR = boosterStats[4]
+                        boosterCons = boosterStats[5]
+                        boosterAccel = boosterStats[6]
+                        boosterTS = boosterStats[7] * speedMod
+                        break
+
+                if event == sg.WIN_CLOSED:
                     break
+            
+            window.close()
 
-            if event == sg.WIN_CLOSED:
-                break
-        
-        window.close()
+        else:
+            overloadMod = 1.4
+            accel = 25 * overloadMod
+            decel = 30 * overloadMod
+            pAccel = 300 * overloadMod
+            yAccel = 200 * overloadMod
+            rAccel = 150 * overloadMod
+            speedMod = 0.9025
+            chassisMinThrottleMod = 0.2
+            chassisOptThrottleMod = 0.4
+            chassisMaxThrottleMod = 0.5
+            slideMod = 1.5
+            maxPitch = 90 * overloadMod
+            maxYaw = 90 * overloadMod
+            maxRoll = 90 * overloadMod
+            topSpeed = 125 * overloadMod * speedMod
+            boosterEnergy = boosterStats[3]
+            boosterRR = boosterStats[4]
+            boosterCons = boosterStats[5]
+            boosterAccel = boosterStats[6]
+            boosterTS = boosterStats[7] * speedMod
 
     else:
         overloadMod = 1.4
-        accel = 25 * overloadMod
+        accel = 30 * overloadMod
         decel = 30 * overloadMod
-        pAccel = 300 * overloadMod
-        yAccel = 200 * overloadMod
-        rAccel = 150 * overloadMod
-        speedMod = 0.9025
+        pAccel = 250 * overloadMod
+        yAccel = 250 * overloadMod
+        rAccel = 125 * overloadMod
+        speedMod = 0.95
         chassisMinThrottleMod = 0.2
         chassisOptThrottleMod = 0.4
         chassisMaxThrottleMod = 0.5
-        slideMod = 1.5
-        maxPitch = 90 * overloadMod
-        maxYaw = 90 * overloadMod
-        maxRoll = 90 * overloadMod
-        topSpeed = 125 * overloadMod * speedMod
-        boosterEnergy = boosterStats[3]
-        boosterRR = boosterStats[4]
-        boosterCons = boosterStats[5]
-        boosterAccel = boosterStats[6]
-        boosterTS = boosterStats[7] * speedMod
+        slideMod = 1.3
+        maxPitch = 90.3 * overloadMod
+        maxYaw = 90.2 * overloadMod
+        maxRoll = 90.3 * overloadMod
+        topSpeed = 125.4 * overloadMod * speedMod
+        boosterEnergy = 1222.6
+        boosterRR = 45.6
+        boosterCons = 99.5
+        boosterAccel = 52.7
+        boosterTS = 39.9 * speedMod
 
     dataLayoutLeft = [
         [sg.Push(),sg.Text('Pitch: ',font=baseFont)],
@@ -444,7 +480,8 @@ def main():
         [sg.Push(),sg.Button('Pause',font=baseFont),sg.Button('Reset',font=baseFont),sg.Push()]
     ]
 
-    infoWindow = sg.Window('Flight Info',dataLayout,finalize=True,size=(400,325),relative_location=(-712,0))
+    if uiEnable:
+        infoWindow = sg.Window('Flight Info',dataLayout,finalize=True,size=(400,325),relative_location=(-712,0))
 
     pygame.init()
     screen = pygame.display.set_mode((1024,768))
@@ -514,7 +551,11 @@ def main():
     while True:
         time1 = time.time()
         if time.time() - lastUpdate > 0.1:
-            infoEvents, infoValues = infoWindow.read(timeout=0)
+            if uiEnable:
+                infoEvents, infoValues = infoWindow.read(timeout=0)
+            else:
+                infoEvents = {}
+                infoValues = []
             updateFlag = True
             lastUpdate = time.time()
         else:
@@ -688,7 +729,7 @@ def main():
             else:
                 trackCounter += 1
             time6 = time.time()
-            displayedPoints, radii = renderPoints(position,transform,ax)
+            displayedPoints, radii = renderPoints(position,transform)
             time7 = time.time()
             screen.fill((0,0,0))
 
@@ -696,7 +737,7 @@ def main():
                 pygame.draw.circle(screen,tuple([128,255,255]),displayedPoints[i],radii[i])
             arcRect = [512-120,384-110,240,220]
 
-            if infoValues['uitoggle']:
+            if True:
 
                 lineColor = tuple([200,200,200])
                 pygame.draw.arc(screen,lineColor,arcRect,2*np.pi/3,4*np.pi/3,width=1)
@@ -759,7 +800,7 @@ def main():
             # print('azi\t' + str(azimuthAngle) + '\t' + str(viewVector[0]) + '\t' + str(viewVector[1]))
             lastTick = time.time()
             time9 = time.time()
-        if updateFlag:
+        if updateFlag and uiEnable:
             infoWindow['pitchoutput'].update(round(pitch,0))
             infoWindow['yawoutput'].update(round(yaw,0))
             infoWindow['rolloutput'].update(round(roll,0))
@@ -773,33 +814,34 @@ def main():
             facingTrack = facingTrack[1:]
             velocityTrack = velocityTrack[1:]
 
-        ax.cla()
-        ax.set_aspect('equal')
-        maxDim = max(100,max([max(x) for x in positionTrack] + [-min(x) for x in positionTrack]))
-        if plotToggle == 'self':
-            ax.set_xlim(position[0]-250,position[0]+250)
-            ax.set_ylim(position[1]-250,position[1]+250)
-            ax.set_zlim(position[2]-250,position[2]+250)
-            ax.view_init(elev=elevationAngle,azim=azimuthAngle,roll=0)
-        else:
-            ax.set_xlim(-maxDim,maxDim)
-            ax.set_ylim(-maxDim,maxDim)
-            ax.set_zlim(-maxDim,maxDim)
-        ax.scatter([0],[0],[0],c='Red',s=10)
-        if positionTrack != []:
-            if maxDim < 250:
-                aLength = maxDim/5
+        if uiEnable:
+            ax.cla()
+            ax.set_aspect('equal')
+            maxDim = max(100,max([max(x) for x in positionTrack] + [-min(x) for x in positionTrack]))
+            if plotToggle == 'self':
+                ax.set_xlim(position[0]-250,position[0]+250)
+                ax.set_ylim(position[1]-250,position[1]+250)
+                ax.set_zlim(position[2]-250,position[2]+250)
+                ax.view_init(elev=elevationAngle,azim=azimuthAngle,roll=0)
             else:
-                aLength = 50
+                ax.set_xlim(-maxDim,maxDim)
+                ax.set_ylim(-maxDim,maxDim)
+                ax.set_zlim(-maxDim,maxDim)
+            ax.scatter([0],[0],[0],c='Red',s=10)
+            if positionTrack != []:
+                if maxDim < 250:
+                    aLength = maxDim/5
+                else:
+                    aLength = 50
 
-            velNorm = normalize(velocity)
-            ax.plot([pos[0] for pos in positionTrack],[pos[1] for pos in positionTrack],[pos[2] for pos in positionTrack],color='blue')
-            ax.quiver(positionTrack[-1][0],positionTrack[-1][1],positionTrack[-1][2],facing[0],facing[1],facing[2],length=aLength,color='red')
-            ax.quiver(positionTrack[-1][0],positionTrack[-1][1],positionTrack[-1][2],velNorm[0],velNorm[1],velNorm[2],length=aLength,color='green')
-            if infoValues['quivertoggle']:
-                ax.quiver([pos[0] for pos in positionTrackQuiver],[pos[1] for pos in positionTrackQuiver],[pos[2] for pos in positionTrackQuiver],[fac[0] for fac in facingTrack],[fac[1] for fac in facingTrack],[fac[2] for fac in facingTrack],length=aLength,color='red')
-                ax.quiver([pos[0] for pos in positionTrackQuiver],[pos[1] for pos in positionTrackQuiver],[pos[2] for pos in positionTrackQuiver],[vel[0] for vel in velocityTrack],[vel[1] for vel in velocityTrack],[vel[2] for vel in velocityTrack],length=aLength,color='green')
-        time10 = time.time()
+                velNorm = normalize(velocity)
+                ax.plot([pos[0] for pos in positionTrack],[pos[1] for pos in positionTrack],[pos[2] for pos in positionTrack],color='blue')
+                ax.quiver(positionTrack[-1][0],positionTrack[-1][1],positionTrack[-1][2],facing[0],facing[1],facing[2],length=aLength,color='red')
+                ax.quiver(positionTrack[-1][0],positionTrack[-1][1],positionTrack[-1][2],velNorm[0],velNorm[1],velNorm[2],length=aLength,color='green')
+                if infoValues['quivertoggle']:
+                    ax.quiver([pos[0] for pos in positionTrackQuiver],[pos[1] for pos in positionTrackQuiver],[pos[2] for pos in positionTrackQuiver],[fac[0] for fac in facingTrack],[fac[1] for fac in facingTrack],[fac[2] for fac in facingTrack],length=aLength,color='red')
+                    ax.quiver([pos[0] for pos in positionTrackQuiver],[pos[1] for pos in positionTrackQuiver],[pos[2] for pos in positionTrackQuiver],[vel[0] for vel in velocityTrack],[vel[1] for vel in velocityTrack],[vel[2] for vel in velocityTrack],length=aLength,color='green')
+            time10 = time.time()
 
         # if time5 > time4:
         #     print('----------------')
@@ -862,7 +904,8 @@ def main():
 
         win32gui.EnumWindows(enumHandler,None)
 
-    infoWindow.close()
+    if uiEnable:
+        infoWindow.close()
     
     data.close()
     data2.close()
